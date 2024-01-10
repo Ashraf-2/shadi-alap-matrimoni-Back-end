@@ -48,6 +48,21 @@ async function run() {
         })
 
 
+        app.get('/biodataGender/:gender', async (req, res) => {
+            try {
+                const gender = req.params.gender;
+                // console.log(gender)
+                const query = { gender: gender };
+                const result = await biodataCollection.find(query).toArray();
+                // console.log(result)
+                // res.send({result, gender});
+                res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
+
+
 
         // Send a ping to confirm a successful connection 
         await client.db("admin").command({ ping: 1 });
