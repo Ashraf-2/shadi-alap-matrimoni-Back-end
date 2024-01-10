@@ -49,6 +49,7 @@ async function run() {
 
 
         app.get('/biodataGender/:gender', async (req, res) => {
+            console.log('gender wise data hitted')
             try {
                 const gender = req.params.gender;
                 // console.log(gender)
