@@ -34,6 +34,7 @@ async function run() {
 
         //databse collections
         const biodataCollection = client.db('shadi-alap-DB').collection('bioDataCL');
+        const userCollection = client.db('shadi-alap-DB').collection('userCL');
 
 
         //crud operations
@@ -63,6 +64,31 @@ async function run() {
             }
         })
 
+        //user related CRUD
+        app.get('/users', async(req,res)=> {
+            try {
+                const result = await userCollection.find().toArray();
+                res.send(result);
+            } catch (error) {
+                console.log(error);
+            }  
+        })
+        app.post('/users', async(req,res)=> {
+            try {
+                const user = req.body;
+                const query = {email: user.email};
+                console.log(user, user.email);
+                const existUser = await userCollection.findOne(query);
+                if(existUser){
+                    return res.send({message: "sorry, user already register to the database.",
+                    insertedId: null})
+                }
+                const result = await userCollection.insertOne(user);
+                res.send(result);
+            } catch (error) {
+                console.log(error);
+            }
+        })
 
 
         // Send a ping to confirm a successful connection 
