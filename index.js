@@ -15,7 +15,7 @@ app.use(cors());
 
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.bx5otjq.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -38,6 +38,8 @@ async function run() {
 
 
         //crud operations
+
+        //ALL biodata
         app.get('/biodata', async (req, res) => {
             // console.log("hello");
             try {
@@ -48,9 +50,9 @@ async function run() {
             }
         })
 
-
+        //Gender wise biodata
         app.get('/biodataGender/:gender', async (req, res) => {
-            console.log('gender wise data hitted')
+            // console.log('gender wise data hitted')
             try {
                 const gender = req.params.gender;
                 // console.log(gender)
@@ -64,24 +66,41 @@ async function run() {
             }
         })
 
-        //user related CRUD
-        app.get('/users', async(req,res)=> {
+        //ALL user related CRUD - all user in database
+        app.get('/users', async (req, res) => {
             try {
                 const result = await userCollection.find().toArray();
                 res.send(result);
             } catch (error) {
                 console.log(error);
-            }  
+            }
         })
-        app.post('/users', async(req,res)=> {
+
+        // get user data using email
+        app.get('/users/:email', async(req,res)=> {
+            try {
+                const email = req.params.email;
+                const query = {email: email};
+                const result = await userCollection.findOne(query);
+                // console.log(result)
+                res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
+
+        //store new user in database
+        app.post('/users', async (req, res) => {
             try {
                 const user = req.body;
-                const query = {email: user.email};
+                const query = { email: user.email };
                 console.log(user, user.email);
                 const existUser = await userCollection.findOne(query);
-                if(existUser){
-                    return res.send({message: "sorry, user already register to the database.",
-                    insertedId: null})
+                if (existUser) {
+                    return res.send({
+                        message: "sorry, user already register to the database.",
+                        insertedId: null
+                    })
                 }
                 const result = await userCollection.insertOne(user);
                 res.send(result);
@@ -89,6 +108,28 @@ async function run() {
                 console.log(error);
             }
         })
+
+
+        //favourite id related crud
+        app.patch('/favouriteID/:id', async(req,res)=> {
+            try {
+                const id = req.body.params;
+                const filter = {_id: new ObjectId(id)}
+                const user = req.body;
+                const updatedDoc = {
+                    $set: {
+                        favourites: user.favouriteID
+                    }
+                }
+                // const result = await userCollection.updateOne(filter,{$set: user})
+                const result = await userCollection.updateOne(filter,updatedDoc)
+                console.log(result);
+                res.send(result)
+            } catch (error) {
+                console.log(error)
+            }
+        })
+
 
 
         // Send a ping to confirm a successful connection 
