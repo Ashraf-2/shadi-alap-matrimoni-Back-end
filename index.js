@@ -77,10 +77,10 @@ async function run() {
         })
 
         // get user data using email
-        app.get('/users/:email', async(req,res)=> {
+        app.get('/users/:email', async (req, res) => {
             try {
                 const email = req.params.email;
-                const query = {email: email};
+                const query = { email: email };
                 const result = await userCollection.findOne(query);
                 // console.log(result)
                 res.send(result);
@@ -111,20 +111,34 @@ async function run() {
 
 
         //favourite id related crud
-        app.patch('/favouriteID/:id', async(req,res)=> {
+        app.patch('/favouriteID/:id', async (req, res) => {
             try {
-                const id = req.body.params;
-                const filter = {_id: new ObjectId(id)}
-                const user = req.body;
-                const updatedDoc = {
-                    $set: {
-                        favourites: user.favouriteID
+                const id = req.params.id;
+                const filter = { _id: new ObjectId(id) }
+                // console.log("id for update: ", id); 
+                const favID = req.body.favouriteID;
+                console.log("favID: ", favID);
+
+                //first update the favourites as an array.
+                const firstUpdate = {
+                    $setOnInsert: {
+                        favourites: []
+                    },
+                }
+                const FirstOptions = { upsert: true };
+                const result1 = await userCollection.updateOne(filter, firstUpdate, FirstOptions);
+                console.log("result1: ", result1);;
+
+                //secodn: update the favourites array by givign its value favID,
+                const secondUpdate = {
+                    $push: {
+                        favourites: favID
                     }
                 }
-                // const result = await userCollection.updateOne(filter,{$set: user})
-                const result = await userCollection.updateOne(filter,updatedDoc)
-                console.log(result);
-                res.send(result)
+                const secondOptions = {upsert: true};
+                const finalResult = await userCollection.updateOne(filter,secondUpdate, secondOptions )
+                console.log('final result: ', finalResult);
+                res.send(finalResult);
             } catch (error) {
                 console.log(error)
             }
