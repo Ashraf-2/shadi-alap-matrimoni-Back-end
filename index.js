@@ -1,6 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
+
+
+
 
 const app = express();
 
@@ -37,7 +41,35 @@ async function run() {
         const userCollection = client.db('shadi-alap-DB').collection('userCL');
 
 
+        //middlewears
+        const varifyToken = (req, res, next) => {
+            console.log('inside varify token: ', req.headers);
+
+            if (!req.headers.authorization) {
+                return res.status(401).send({ message: 'Unauthorized access' })
+            }
+            const token = req.headers.authorization.split(' ')[1];    //use your brain to know the functionality of this line :) 😊 
+
+            jwt.verify(token, process.env.JSON_SECRET_KEY, (err, decoded) => {
+                if (err) {
+                    return res.status(401).send({ message: 'Unauthorized access' })
+                }
+                req.decoded = decoded;
+                next();
+            })
+            next();
+
+        }
+
+
         //crud operations
+
+        //JWT related CRUD
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.JSON_SECRET_KEY, { expiresIn: '1h' });
+            res.send({ token })
+        })
 
         //ALL biodata
         app.get('/biodata', async (req, res) => {
@@ -45,6 +77,17 @@ async function run() {
             try {
                 const result = await biodataCollection.find().toArray();
                 res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
+        //specific user biodata 
+        app.get('/biodata/:email', async (req, res) => {
+            try {
+                const email = req.params.email;
+                const query = { email: email };
+                const result = await biodataCollection.findOne(query);
+                res.send({result})
             } catch (error) {
                 console.log(error)
             }
@@ -69,8 +112,10 @@ async function run() {
         //ALL user related CRUD - all user in database
         app.get('/users', async (req, res) => {
             try {
+                // console.log(req.headers);
                 const result = await userCollection.find().toArray();
                 res.send(result);
+
             } catch (error) {
                 console.log(error);
             }
@@ -135,13 +180,26 @@ async function run() {
                         favourites: favID
                     }
                 }
-                const secondOptions = {upsert: true};
-                const finalResult = await userCollection.updateOne(filter,secondUpdate, secondOptions )
+                const secondOptions = { upsert: true };
+                const finalResult = await userCollection.updateOne(filter, secondUpdate, secondOptions)
                 console.log('final result: ', finalResult);
                 res.send(finalResult);
             } catch (error) {
                 console.log(error)
             }
+        })
+
+        //to know isAdmin - api
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let admin = false;
+            if (user) {
+                admin = user?.role === 'admin'; //admin will true
+                // if(user?.role ==)
+            }
+            res.send({ admin })
         })
 
 
