@@ -39,6 +39,7 @@ async function run() {
         //databse collections
         const biodataCollection = client.db('shadi-alap-DB').collection('bioDataCL');
         const userCollection = client.db('shadi-alap-DB').collection('userCL');
+        const contactRequestCollection = client.db('shadi-alap-DB').collection('contact-requestCL');
 
 
         //middlewears
@@ -57,7 +58,7 @@ async function run() {
                 req.decoded = decoded;
                 next();
             })
-            next();
+            // next();
 
         }
 
@@ -71,7 +72,7 @@ async function run() {
             res.send({ token })
         })
 
-        //ALL biodata
+        //biodata - related crud
         app.get('/biodata', async (req, res) => {
             // console.log("hello");
             try {
@@ -87,7 +88,7 @@ async function run() {
                 const email = req.params.email;
                 const query = { email: email };
                 const result = await biodataCollection.findOne(query);
-                res.send({result})
+                res.send(result)
             } catch (error) {
                 console.log(error)
             }
@@ -104,6 +105,37 @@ async function run() {
                 // console.log(result)
                 // res.send({result, gender});
                 res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
+
+        //post - store biodata.
+        app.patch('/biodata/:email', async(req,res)=> {
+            console.log('biodata hitted by email')
+            try {
+                const email = req.params.email;
+                const biodata = req.body;
+                const query = {email: email};
+                const existUser = await biodataCollection.findOne(query);
+                if(existUser){
+                    //update his data.
+                    const updateDoc = {
+                        $set: {
+                            biodata
+                        }
+                    }
+                    const options = {upsert: true}
+                    const result = await biodataCollection.updateOne(query, updateDoc, options);
+                    res.send(result);
+
+                }else{
+                    //post his data
+                    const result = await biodataCollection.insertOne(biodata)
+                    res.send(result);
+                }
+                console.log(email);
+                console.log(biodata);
             } catch (error) {
                 console.log(error)
             }
@@ -201,6 +233,66 @@ async function run() {
             }
             res.send({ admin })
         })
+
+
+
+        //contact-request related api
+
+        app.get('/contact-request', async(req,res)=> {
+            try {
+                const result = await contactRequestCollection.find().toArray();
+                res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
+
+        //contact request - patch
+        app.patch('/contact-request', async(req,res)=> {
+            try {
+                const request_body = req.body;
+                console.log(request_body);
+                const {requesterEmail} = request_body;
+                console.log(requesterEmail);
+                const filter = {email: requesterEmail};
+                // console.log(isExist);
+                const newRequest = {
+                    requestedId: request_body?.requestedId,
+                    requestedPhoneNumber: request_body?.requestedPhoneNumber,
+                    requestStatus: 'pending',
+                    paid: '500',
+                }
+                
+                //first update: make the contact request as it is an array.
+                const firstUpdate = {
+                    $setOnInsert: {
+                        contactRequest: []
+                    },
+                    $set: {
+                        requesterId: request_body?.requesterId,
+                        requesterEmail: request_body?.requesterEmail,
+                    }
+                }
+                const FirstOptions = { upsert: true };
+                const result1 = await contactRequestCollection.updateOne(filter, firstUpdate, FirstOptions);
+                console.log("first Update: ", result1);
+
+                //second update: now update the array element on every request for contact info.
+                const secondUpdate = {
+                    $push: {
+                        contactRequest: newRequest,
+                    }
+                }
+                const secondOptions = { upsert: true };
+                const finalResult = await contactRequestCollection.updateOne(filter, secondUpdate, secondOptions)
+                console.log('final result: ', finalResult);
+                res.send(finalResult)
+
+            } catch (error) {
+                console.log(error)
+            }
+        })
+
 
 
 
