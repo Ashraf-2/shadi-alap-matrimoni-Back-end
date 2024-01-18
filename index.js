@@ -62,6 +62,19 @@ async function run() {
 
         }
 
+        //middleWear - varify admin
+        //middleWear -=> Verify Admin
+        const varifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            const isAdmin = user?.role === 'admin';
+            if (!isAdmin) {
+                return res.status(403).send({ message: "Forbidden Access" })
+            }
+            next();
+        }
+
 
         //crud operations
 
@@ -77,6 +90,16 @@ async function run() {
             // console.log("hello");
             try {
                 const result = await biodataCollection.find().toArray();
+                res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
+        app.get('/biodata/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const query = { _id: new ObjectId(id) };
+                const result = await biodataCollection.findOne(query);
                 res.send(result);
             } catch (error) {
                 console.log(error)
@@ -111,25 +134,25 @@ async function run() {
         })
 
         //post - store biodata.
-        app.patch('/biodata/:email', async(req,res)=> {
+        app.patch('/biodata/:email', async (req, res) => {
             console.log('biodata hitted by email')
             try {
                 const email = req.params.email;
                 const biodata = req.body;
-                const query = {email: email};
+                const query = { email: email };
                 const existUser = await biodataCollection.findOne(query);
-                if(existUser){
+                if (existUser) {
                     //update his data.
                     const updateDoc = {
                         $set: {
                             biodata
                         }
                     }
-                    const options = {upsert: true}
+                    const options = { upsert: true }
                     const result = await biodataCollection.updateOne(query, updateDoc, options);
                     res.send(result);
 
-                }else{
+                } else {
                     //post his data
                     const result = await biodataCollection.insertOne(biodata)
                     res.send(result);
@@ -187,6 +210,46 @@ async function run() {
         })
 
 
+        //favourite person - by email get.
+        app.get('/favourite/:email', async (req, res) => {
+            console.log('favourite by email of individual users hitted');
+            try {
+                const email = req.params.email;
+                const query = { email: email };
+                const user = await userCollection.findOne(query)
+                console.log(user);
+                console.log(user.favourites);
+                const favourites = user?.favourites;
+
+
+                const favoritesData = await Promise.all(
+                    favourites.map(async (Id) => {
+                        const filter = { _id: new ObjectId(Id) };
+                        // const result = await biodataCollection.find(filter).toArray();
+                        const result = await biodataCollection.findOne(filter)
+                        return result;
+                    })
+                );
+                console.log(favoritesData);
+                res.send(favoritesData);
+
+                
+
+            //    const fav = favourites.map( async (item)=> {
+            //     const filter = {_id: new ObjectId(item)};
+            //     const res = await biodataCollection.findOne(filter)
+            //     return res;
+            //    } )
+
+            //    console.log(fav);
+            //    res.send(fav);
+
+            } catch (error) {
+                console.log(error)
+            }
+        })
+
+
         //favourite id related crud
         app.patch('/favouriteID/:id', async (req, res) => {
             try {
@@ -238,7 +301,7 @@ async function run() {
 
         //contact-request related api
 
-        app.get('/contact-request', async(req,res)=> {
+        app.get('/contact-request', async (req, res) => {
             try {
                 const result = await contactRequestCollection.find().toArray();
                 res.send(result);
@@ -248,13 +311,13 @@ async function run() {
         })
 
         //contact request - patch
-        app.patch('/contact-request', async(req,res)=> {
+        app.patch('/contact-request', async (req, res) => {
             try {
                 const request_body = req.body;
                 console.log(request_body);
-                const {requesterEmail} = request_body;
+                const { requesterEmail } = request_body;
                 console.log(requesterEmail);
-                const filter = {email: requesterEmail};
+                const filter = { email: requesterEmail };
                 // console.log(isExist);
                 const newRequest = {
                     requestedId: request_body?.requestedId,
@@ -262,7 +325,7 @@ async function run() {
                     requestStatus: 'pending',
                     paid: '500',
                 }
-                
+
                 //first update: make the contact request as it is an array.
                 const firstUpdate = {
                     $setOnInsert: {
