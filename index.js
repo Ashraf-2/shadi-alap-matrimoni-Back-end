@@ -40,6 +40,7 @@ async function run() {
         const biodataCollection = client.db('shadi-alap-DB').collection('bioDataCL');
         const userCollection = client.db('shadi-alap-DB').collection('userCL');
         const contactRequestCollection = client.db('shadi-alap-DB').collection('contact-requestCL');
+        const favouritesCollections = client.db('shadi-alap-DB').collection('favouriteCL');
 
 
         //middlewears
@@ -106,7 +107,7 @@ async function run() {
             }
         })
         //specific user biodata 
-        app.get('/biodata/:email', async (req, res) => {
+        app.get('/biodata/person/:email', async (req, res) => {
             try {
                 const email = req.params.email;
                 const query = { email: email };
@@ -209,76 +210,39 @@ async function run() {
             }
         })
 
-
-        //favourite person - by email get.
-        app.get('/favourite/:email', async (req, res) => {
-            console.log('favourite by email of individual users hitted');
+        //favourite persons related CRUD -- maitaining a favourite collections.
+        //get favourite persons based on logged in user
+        app.get('/favourite/:email', async(req,res)=> {
+            console.log('fav email wise hitted')
             try {
                 const email = req.params.email;
-                const query = { email: email };
-                const user = await userCollection.findOne(query)
-                console.log(user);
-                console.log(user.favourites);
-                const favourites = user?.favourites;
-
-
-                const favoritesData = await Promise.all(
-                    favourites.map(async (Id) => {
-                        const filter = { _id: new ObjectId(Id) };
-                        // const result = await biodataCollection.find(filter).toArray();
-                        const result = await biodataCollection.findOne(filter)
-                        return result;
-                    })
-                );
-                console.log(favoritesData);
-                res.send(favoritesData);
-
-                
-
-            //    const fav = favourites.map( async (item)=> {
-            //     const filter = {_id: new ObjectId(item)};
-            //     const res = await biodataCollection.findOne(filter)
-            //     return res;
-            //    } )
-
-            //    console.log(fav);
-            //    res.send(fav);
-
+                const query = {userEmail: email};
+                const result = await favouritesCollections.find(query).toArray();
+                console.log(result);
+                res.send(result)
             } catch (error) {
                 console.log(error)
             }
         })
 
+        //store favourite person in database.
+        app.put('/favourite', async(req,res)=> {
+            const email = req.params.email;
+            const query = {email: email};
+            const body = req.body;
+           
+            const result = await favouritesCollections.insertOne(body)
+            console.log(body)
+            res.send(result)
+        })
 
-        //favourite id related crud
-        app.patch('/favouriteID/:id', async (req, res) => {
+        //delete favourite person - api
+        app.delete('/favourite/:id', async(req,res)=> {
             try {
                 const id = req.params.id;
-                const filter = { _id: new ObjectId(id) }
-                // console.log("id for update: ", id); 
-                const favID = req.body.favouriteID;
-                console.log("favID: ", favID);
-
-                //first update the favourites as an array.
-                const firstUpdate = {
-                    $setOnInsert: {
-                        favourites: []
-                    },
-                }
-                const FirstOptions = { upsert: true };
-                const result1 = await userCollection.updateOne(filter, firstUpdate, FirstOptions);
-                console.log("result1: ", result1);;
-
-                //secodn: update the favourites array by givign its value favID,
-                const secondUpdate = {
-                    $push: {
-                        favourites: favID
-                    }
-                }
-                const secondOptions = { upsert: true };
-                const finalResult = await userCollection.updateOne(filter, secondUpdate, secondOptions)
-                console.log('final result: ', finalResult);
-                res.send(finalResult);
+                const query = {_id: new ObjectId(id)};
+                const result = await favouritesCollections.deleteOne(query);
+                res.send(result)
             } catch (error) {
                 console.log(error)
             }
@@ -296,6 +260,8 @@ async function run() {
             }
             res.send({ admin })
         })
+
+
 
 
 
