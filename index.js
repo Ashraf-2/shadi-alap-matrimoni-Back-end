@@ -190,6 +190,20 @@ async function run() {
             }
         })
 
+
+        app.patch('/users/premimum/:email', async(req,res)=> {
+            try {
+                const email = req.params.query;
+                const query = {email: email};
+                const body = req.body;
+                const updatedDoc = {
+
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        })
+
         //store new user in database
         app.post('/users', async (req, res) => {
             try {
