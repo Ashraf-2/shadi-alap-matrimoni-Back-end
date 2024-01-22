@@ -192,13 +192,12 @@ async function run() {
 
 
         app.patch('/users/premimum/:email', async(req,res)=> {
+            console.log('hitted premimum making');
             try {
                 const email = req.params.query;
                 const query = {email: email};
                 const body = req.body;
-                const updatedDoc = {
-
-                }
+                console.log(body);
             } catch (error) {
                 console.log(error)
             }
@@ -221,6 +220,24 @@ async function run() {
                 res.send(result);
             } catch (error) {
                 console.log(error);
+            }
+        })
+
+
+        //make user admin
+        app.patch('/user/admin/:id', async(req,res)=> {
+            try {
+                const id = req.params.id;
+                const query = {_id: new ObjectId(id)};
+                const updatedDoc = {
+                    $set:{
+                        role: 'admin',
+                    }
+                }
+                const result = await userCollection.updateOne(query,updatedDoc)
+                res.send(result);
+            } catch (error) {
+                console.log(error)
             }
         })
 
