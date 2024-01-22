@@ -224,7 +224,7 @@ async function run() {
         })
 
 
-        //make user admin
+        //make user as an admin api
         app.patch('/user/admin/:id', async(req,res)=> {
             try {
                 const id = req.params.id;
@@ -232,6 +232,22 @@ async function run() {
                 const updatedDoc = {
                     $set:{
                         role: 'admin',
+                    }
+                }
+                const result = await userCollection.updateOne(query,updatedDoc)
+                res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
+        //make user as a Premium user-  api
+        app.patch('/user/premium/:id', async(req,res)=> {
+            try {
+                const id = req.params.id;
+                const query = {_id: new ObjectId(id)};
+                const updatedDoc = {
+                    $set:{
+                        membership: 'premium',
                     }
                 }
                 const result = await userCollection.updateOne(query,updatedDoc)
