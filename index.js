@@ -334,6 +334,14 @@ async function run() {
                 console.log(error)
             }
         })
+        app.get('/contact-request/revunue', async (req, res) => {
+            try {
+                const result = await contactRequestCollection.find().toArray();
+                res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
 
         app.patch('/contact-request/approve/:id', async(req,res)=> {
             try {
