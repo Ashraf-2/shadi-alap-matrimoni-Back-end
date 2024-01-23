@@ -327,59 +327,31 @@ async function run() {
 
         app.get('/contact-request', async (req, res) => {
             try {
-                const result = await contactRequestCollection.find().toArray();
+                const query = {requestSuccessStatus: 'pending'};
+                const result = await contactRequestCollection.find(query).toArray();
                 res.send(result);
             } catch (error) {
                 console.log(error)
             }
         })
 
-        //contact request - patch
-        // app.patch('/contact-request', async (req, res) => {
-        //     try {
-        //         const request_body = req.body;
-        //         console.log(request_body);
-        //         const { requesterEmail } = request_body;
-        //         console.log(requesterEmail);
-        //         const filter = { email: requesterEmail };
-        //         // console.log(isExist);
-        //         const newRequest = {
-        //             requestedId: request_body?.requestedId,
-        //             requestedPhoneNumber: request_body?.requestedPhoneNumber,
-        //             requestStatus: 'pending',
-        //             paid: '500',
-        //         }
+        app.patch('/contact-request/approve/:id', async(req,res)=> {
+            try {
+                const id = req.params.id;
+                const query = {_id: new ObjectId(id)};
+                const updatedDoc = {
+                    $set: {
+                        requestSuccessStatus: 'approved'
+                    }
+                }
+                const result = await contactRequestCollection.updateOne(query,updatedDoc)
+                res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
 
-        //         //first update: make the contact request as it is an array.
-        //         const firstUpdate = {
-        //             $setOnInsert: {
-        //                 contactRequest: []
-        //             },
-        //             $set: {
-        //                 requesterId: request_body?.requesterId,
-        //                 requesterEmail: request_body?.requesterEmail,
-        //             }
-        //         }
-        //         const FirstOptions = { upsert: true };
-        //         const result1 = await contactRequestCollection.updateOne(filter, firstUpdate, FirstOptions);
-        //         console.log("first Update: ", result1);
-
-        //         //second update: now update the array element on every request for contact info.
-        //         const secondUpdate = {
-        //             $push: {
-        //                 contactRequest: newRequest,
-        //             }
-        //         }
-        //         const secondOptions = { upsert: true };
-        //         const finalResult = await contactRequestCollection.updateOne(filter, secondUpdate, secondOptions)
-        //         console.log('final result: ', finalResult);
-        //         res.send(finalResult)
-
-        //     } catch (error) {
-        //         console.log(error)
-        //     }
-        // })
-
+        //post a contact request by the user -- api
         app.post('/contact-request',async(req,res)=> {
             try {
                 const body = req.body;
@@ -389,11 +361,11 @@ async function run() {
                 console.log(error)
             }
         })
-        //get contact request information based on email 
+        //get contact request information based on email for the user
         app.get('/contact-request/:email', async(req,res)=> {
             try {
                 const email = req.params.email;
-                const query = {requesterEmail: email};
+                const query = {requesterPersonEmail: email};
                 const result = await contactRequestCollection.find(query).toArray();
                 console.log(result);
                 res.send(result)
