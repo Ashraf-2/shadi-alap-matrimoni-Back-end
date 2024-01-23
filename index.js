@@ -144,13 +144,8 @@ async function run() {
                 const existUser = await biodataCollection.findOne(query);
                 if (existUser) {
                     //update his data.
-                    const updateDoc = {
-                        $set: {
-                            biodata
-                        }
-                    }
-                    const options = { upsert: true }
-                    const result = await biodataCollection.updateOne(query, updateDoc, options);
+
+                    const result = await biodataCollection.updateOne(query,{ $set: biodata });
                     res.send(result);
 
                 } else {
@@ -158,8 +153,8 @@ async function run() {
                     const result = await biodataCollection.insertOne(biodata)
                     res.send(result);
                 }
-                console.log(email);
-                console.log(biodata);
+                // console.log(email);
+                // console.log(biodata);
             } catch (error) {
                 console.log(error)
             }
@@ -190,19 +185,6 @@ async function run() {
             }
         })
 
-
-        app.patch('/users/premimum/:email', async(req,res)=> {
-            console.log('hitted premimum making');
-            try {
-                const email = req.params.query;
-                const query = {email: email};
-                const body = req.body;
-                console.log(body);
-            } catch (error) {
-                console.log(error)
-            }
-        })
-
         //store new user in database
         app.post('/users', async (req, res) => {
             try {
@@ -224,7 +206,7 @@ async function run() {
         })
 
 
-        //make user as an admin api
+        //make user as an admin api by the admin himself. [admin dashboard]
         app.patch('/user/admin/:id', async(req,res)=> {
             try {
                 const id = req.params.id;
@@ -240,7 +222,7 @@ async function run() {
                 console.log(error)
             }
         })
-        //make user as a Premium user-  api
+        //make user as a Premium user directly also sometimes based on user request by the admin himself -  api - [admin dashboard]
         app.patch('/user/premium/:id', async(req,res)=> {
             try {
                 const id = req.params.id;
@@ -248,10 +230,39 @@ async function run() {
                 const updatedDoc = {
                     $set:{
                         membership: 'premium',
+                        premiumRequestStatus: 'approved',
                     }
                 }
                 const result = await userCollection.updateOne(query,updatedDoc)
                 res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
+        //make user as a Premium user based on user request -  api
+        app.patch('/user/MakePremium/:id', async(req,res)=> {
+            try {
+                const id = req.params.id;
+                const query = {_id: new ObjectId(id)};
+                const updatedDoc = {
+                    $set:{
+                        premiumRequestStatus: 'pending',
+                    }
+                }
+                const result = await userCollection.updateOne(query,updatedDoc)
+                res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
+
+        //get all the making premium request
+        app.get('/user/premiumRequest', async(req,res)=> {
+            try {
+                const query = {premiumRequestStatus: 'pending'};
+                const result = await userCollection.find(query).toArray();
+                console.log(result);
+                res.send(result)
             } catch (error) {
                 console.log(error)
             }
