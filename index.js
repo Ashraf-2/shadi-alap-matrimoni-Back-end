@@ -385,7 +385,7 @@ async function run() {
 
 
         //success story post -api
-        app.get('/successStory', async(req,res)=> {
+        app.get('/successStories', async(req,res)=> {
             try {
                 const result = await successStoryCollections.find().toArray();
                 res.send(result);
