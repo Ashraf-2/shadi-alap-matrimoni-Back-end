@@ -3,9 +3,6 @@ const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-
-
-
 const app = express();
 
 const port = process.env.PORT || 5000;
@@ -34,7 +31,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         //databse collections
         const biodataCollection = client.db('shadi-alap-DB').collection('bioDataCL');
@@ -161,6 +158,25 @@ async function run() {
             }
         })
 
+        //make biodata premium -- by the admin
+        app.patch('/biodata/premium/:email', async(req,res)=> {
+            console.log('biodata premium hitted')
+            try {
+                const email = req.params.email;
+                const query = {email: email};
+                const updatedDoc = {
+                    $set : {
+                        membership : 'premium',
+                    }
+                }
+                const result = await biodataCollection.updateOne(query, updatedDoc);
+                res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
+      
+
         //ALL user related CRUD - all user in database
         app.get('/users', async (req, res) => {
             try {
@@ -240,7 +256,7 @@ async function run() {
                 console.log(error)
             }
         })
-        //make user as a Premium user based on user request -  api
+        //make user as a Premium user based on user request -  api -- its a request by the user. 
         app.patch('/user/MakePremium/:id', async(req,res)=> {
             try {
                 const id = req.params.id;
@@ -406,7 +422,7 @@ async function run() {
 
 
         // Send a ping to confirm a successful connection 
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
