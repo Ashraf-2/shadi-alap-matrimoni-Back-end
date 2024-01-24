@@ -41,6 +41,7 @@ async function run() {
         const userCollection = client.db('shadi-alap-DB').collection('userCL');
         const contactRequestCollection = client.db('shadi-alap-DB').collection('contact-requestCL');
         const favouritesCollections = client.db('shadi-alap-DB').collection('favouriteCL');
+        const successStoryCollections = client.db('shadi-alap-DB').collection('Success-StoryCL');
 
 
         //middlewears
@@ -377,6 +378,27 @@ async function run() {
                 const result = await contactRequestCollection.find(query).toArray();
                 console.log(result);
                 res.send(result)
+            } catch (error) {
+                console.log(error)
+            }
+        })
+
+
+        //success story post -api
+        app.get('/successStory', async(req,res)=> {
+            try {
+                const result = await successStoryCollections.find().toArray();
+                res.send(result);
+            } catch (error) {
+                console.log(error)
+            }
+        })
+        app.post('/successStory', async(req,res)=> {
+            try {
+                const body = req.body;
+                console.log(body);
+                const result = await successStoryCollections.insertOne(body);
+                res.send(result);
             } catch (error) {
                 console.log(error)
             }
